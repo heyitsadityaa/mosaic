@@ -6,10 +6,17 @@
   "scripts": {
     "build": "turbo run build",
     "dev": "turbo run dev",
-    "lint": "turbo run lint",
-    "test": "turbo run test"
+    "lint": "biome lint .",
+    "test": "turbo run test",
+    "typecheck": "turbo run typecheck",
+    "db:generate": "pnpm --filter @mosaic/db run db:generate",
+    "db:migrate": "pnpm --filter @mosaic/db run db:migrate",
+    "db:push": "pnpm --filter @mosaic/db run db:push",
+    "db:studio": "pnpm --filter @mosaic/db run db:studio"
   },
   "devDependencies": {
-    "turbo": "latest"
+    "@biomejs/biome": "^2.5.13",
+    "turbo": "latest",
+    "typescript": "^7.0.2"
   }
 }

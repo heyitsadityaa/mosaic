@@ -1,1 +1,10 @@
-node_modules
+# Dependencies
+node_modules/
+
+# Local environment files
+.env.**
+!.env.example
+
+# Generated build and tooling output
+**/.turbo/
+**/dist/
