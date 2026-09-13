@@ -49,3 +49,9 @@ The files below are the authoritative instructions; this section is only a routi
 - `turborepo` - Monorepo structure, task pipelines, dependencies, caching, filters, and affected builds: `.agents/skills/turborepo/SKILL.md`
 
 When two skills overlap, start with the broader entry point and follow its sibling-skill guidance. For example, use `expo-overview` first for Expo work, `expo-router` for navigation, `expo-native-ui` for platform styling, and `expo-animation` for motion.
+
+### Better Auth
+
+- `better-auth-best-practices` - Configure Better Auth server and client, database adapters, sessions, plugins, and environment variables: `.agents/skills/better-auth-best-practices/SKILL.md`
+- `better-auth-security-best-practices` - Harden Better Auth with rate limiting, CSRF protection, trusted origins, secure sessions, token encryption, and audit logging: `.agents/skills/better-auth-security-best-practices/SKILL.md`
+- `create-auth` - Scaffold Better Auth for TypeScript/JavaScript apps, including adapters, route handlers, OAuth providers, and auth UI: `.agents/skills/create-auth/SKILL.md`
