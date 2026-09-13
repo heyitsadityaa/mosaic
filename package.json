@@ -12,10 +12,12 @@
     "db:generate": "pnpm --filter @mosaic/db run db:generate",
     "db:migrate": "pnpm --filter @mosaic/db run db:migrate",
     "db:push": "pnpm --filter @mosaic/db run db:push",
-    "db:studio": "pnpm --filter @mosaic/db run db:studio"
+    "db:studio": "pnpm --filter @mosaic/db run db:studio",
+    "prepare": "husky"
   },
   "devDependencies": {
     "@biomejs/biome": "^2.5.13",
+    "husky": "^9.1.7",
     "turbo": "latest",
     "typescript": "^7.0.2"
   }
