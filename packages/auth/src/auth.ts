@@ -52,5 +52,10 @@ export const auth = betterAuth({
             clientId: clientId,
             clientSecret: clientSecret,
         }
+    },
+    advanced: {
+        database: {
+            generateId: "uuid"
+        }
     }
 });
