@@ -1,12 +1,19 @@
 {
-  "$schema": "https://biomejs.dev/schemas/2.5.13/schema.json",
-  "files": {
-    "includes": ["**", "!**/.agents", "!**/.turbo", "!**/dist"]
-  },
-  "linter": {
-    "enabled": true,
-    "rules": {
-      "preset": "recommended"
-    }
-  }
+	"$schema": "https://biomejs.dev/schemas/2.5.13/schema.json",
+	"files": {
+		"includes": ["**", "!**/.agents", "!**/.turbo", "!**/dist"]
+	},
+	"assist": {
+		"actions": {
+			"source": {
+				"organizeImports": "on"
+			}
+		}
+	},
+	"linter": {
+		"enabled": true,
+		"rules": {
+			"preset": "recommended"
+		}
+	}
 }

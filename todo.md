@@ -2,7 +2,7 @@
 
 ## In root
 
-- [ ] Setup up biome organizeImport of save and similar formatting options.
+- [x] Setup up biome organizeImport of save and similar formatting options.
 
 ## In @package/auth
 
