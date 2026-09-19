@@ -1,8 +1,8 @@
-# TODO
+# TODOs
 
 ## In `@/`
 
-- [x] Setup up biome organizeImport of save and similar formatting options.
+- [x] Setup up biome organizeImport on save and similar formatting options.
 
 ## In `@package/auth`
 
@@ -11,10 +11,16 @@
 
 ## In `@package/db`
 
+- [ ] Complete schema/schema.ts and db:push.
 - [ ] Writing e2e to test db connection and seeding data.
 
 ## In `@apps/api`
 
 - [ ] Setting up nestjs project.
+- [ ] Give a read: [https://docs.nestjs.com/cli/monorepo](https://docs.nestjs.com/cli/monorepo)
+- [ ] Figure out what happens with tsconfig.json because theirs a tsconfig.base.json in root.
+- [ ] endpoint design and most of it part is yet to be done. (Refer: docs/overview.canvas)
 
 ## In `@apps/mobile`
+
+## In `@package/mobile-ui`
