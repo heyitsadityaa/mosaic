@@ -8,6 +8,7 @@ Each themed doc collects the decisions for one area as independently readable, n
 
 - **Database** → `database-decisions.md`
 - **Authentication** → `authentication-strategy.md`
+- **API** → `api-design.md`
 
 ## Adding a new decision record
 
@@ -35,4 +36,5 @@ Each themed doc collects the decisions for one area as independently readable, n
 | Area          | Document                                              | Status   | Date       |
 | ------------- | ----------------------------------------------------- | -------- | ---------- |
 | Database      | [database-decisions.md](./database-decisions.md)       | Active   | 2026-09-16 |
-| Authentication| [authentication-strategy.md](./authentication-strategy.md) | Pending | —          |
+| Authentication| [authentication-strategy.md](./authentication-strategy.md) | Active   | 2026-09-20 |
+| API           | [api-design.md](./api-design.md)                       | Active   | 2026-09-20 |

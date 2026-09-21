@@ -272,16 +272,17 @@ _(Kept so future-me can see the trail, including the missteps.)_
 - **"Per-habit tables feel clean and isolated."** They do — until uniforms-storage is remembered. N per-habit schemas is the opposite of uniform DX, destroys Drizzle's typing model, and reintroduces UNION-based analytics as an unbounded problem.
 - **"The timezone problem is scary."** It looked overwhelming (travel, DST, mid-day edges) until distilled to the real principle: _store the instant, freeze the bucket, lock against server-computed today_. All edge cases then fall out of two columns and one comparison.
 - **What was right:** append-only event model; typed columns over JSONB for analytics; freezing tz now and deferring opt-in change to Phase 3; server-side enforcement of the lock.
+- **Keep the Better Auth 32-char default.** Revised. The working schema (`packages/db`, commit 1334980) landed on UUID — `gen_random_uuid()` defaults in the database plus `advanced.database.generateId: "uuid"` in the auth config. The single-generation-site principle (the DB owns IDs) beat zero-config, and the docs were reconciled to record UUID as the convention (see §8, §9).
 
 ---
 
 ## 8. Final Phase 1 Schema
 
-The canonical, current schema. Auth tables are owned by Better Auth (Google OAuth only); the `password` column on `account` remains unused. The user's `timezone` is an additional field on the Better Auth `user` model. All PKs and FKs are `text` (32-char random, same scheme as Better Auth — see ID Generation Strategy).
+The canonical, current schema. Auth tables are owned by Better Auth (Google OAuth only); the `password` column on `account` remains unused. The user's `timezone` is an additional field on the Better Auth `user` model. All PKs and FKs are `uuid`, defaulted by Postgres `gen_random_uuid()`; Better Auth is configured with `generateId: "uuid"` to match (see ID Generation Strategy).
 
 ```dbml
 Table user {
-  id            text         [ pk, not null ]
+  id            uuid         [ pk, not null ]
   name          text         [ not null ]
   email         text         [ not null ]
   emailVerified boolean      [ not null ]
@@ -292,8 +293,8 @@ Table user {
 }
 
 Table session {
-  id         text         [ pk, not null ]
-  userId     text         [ not null ]
+  id         uuid         [ pk, not null ]
+  userId     uuid         [ not null ]
   token      text         [ not null, unique ]
   expiresAt  timestamptz  [ not null ]
   ipAddress  text
@@ -307,8 +308,8 @@ Table session {
 }
 
 Table account {
-  id                    text         [ pk, not null ]
-  userId                text         [ not null ]
+  id                    uuid         [ pk, not null ]
+  userId                uuid         [ not null ]
   accountId             text         [ not null ]
   providerId            text         [ not null ]
   accessToken           text
@@ -327,7 +328,7 @@ Table account {
 }
 
 Table verification {
-  id          text         [ pk, not null ]
+  id          uuid         [ pk, not null ]
   identifier  text         [ not null ]
   value       text         [ not null ]
   expiresAt   timestamptz  [ not null ]
@@ -340,8 +341,8 @@ Table verification {
 }
 
 Table habit {
-  id         text         [ pk, not null ]
-  userId     text         [ not null ]
+  id         uuid         [ pk, not null ]
+  userId     uuid         [ not null ]
   name       text         [ not null ]
   valueType  text         [ not null ] -- 'timer' | 'binary' | 'number' | 'options'
   options    jsonb
@@ -351,9 +352,9 @@ Table habit {
 }
 
 Table habit_entries {
-  id           text         [ pk, not null ]
-  habitId      text         [ not null ]
-  userId       text         [ not null ]
+  id           uuid         [ pk, not null ]
+  habitId      uuid         [ not null ]
+  userId       uuid         [ not null ]
   happenedAt   timestamptz  [ not null ]
   entryDate    date         [ not null ]
   durationSecs integer
@@ -384,60 +385,66 @@ Ref habit_entries.habitId > habit.id
 
 ### Context and Problem Statement
 
-Better Auth generates IDs by default. Should we keep its default (32-char random alphanumeric), switch to UUIDs v4/v7, or defer ID generation to the database? The choice locks the column type for every PK and FK in both the auth tables and the domain tables (`habit.userId`, `habit_entries.userId`), so mismatches between conventions are the real risk, not the format itself.
+Better Auth generates IDs by default (32-char random alphanumeric). We chose to switch to **UUID v4**, with generation delegated to the database. The choice locks the column type for every PK and FK in both the auth tables and the domain tables (`habit.userId`, `habit_entries.userId`), so mismatches between conventions are the real risk, not the format itself.
+
+_Revision note: an earlier draft of this record chose the Better Auth 32-char default. The working schema landed on UUID (`packages/db`, commit 1334980), and this record was updated to match — see the §7 narrative and §8._
 
 ### Decision Drivers
 
 - One convention across auth + domain tables (FKs must match PK types; mixed types silently break at insert time).
-- Collisions are a non-issue at this scale (32 chars from `[A-Za-z0-9]` exceed UUIDv4 entropy per character).
-- Fixed, defined length keeps columns predictable and interface-compatible with Better Auth out of the box.
-- Low maintenance; avoid adding a convention the ecosystem has to be reminded about.
+- Generation happens in **one place**: the database's `gen_random_uuid()` default, so no app-side ID code exists anywhere, and nothing can forget to generate.
+- `advanced.database.generateId: "uuid"` in the auth config matches whatever Better Auth generates itself, so auth and domain can never diverge.
+- A recognized standard format that Drizzle, psql, and diagramming tools all treat natively.
+- Collisions are a non-issue at this scale whichever way we go.
 
 ### Considered Options
 
 1. **Keep Better Auth default** — 32-char random alphanumeric, for auth tables _and_ domain tables (id, userId, habitId, ... all `text`).
-2. **UUID v4** — `advanced.database.generateId: "uuid"`; every id becomes a UUID; requires schema type changes and consistent adoption in domain tables.
+2. **UUID v4, generated by the database** — `uuid` columns with `pg_catalog.gen_random_uuid()` defaults; auth config sets `advanced.database.generateId: "uuid"`.
 3. **UUID v7 (time-ordered)** — better index locality at scale; requires a custom `generateId` function everywhere.
 
 ### Decision Outcome
 
-**Chosen: Option 1 — keep the Better Auth default.** Auth tables keep their generated 32-char alphanumeric IDs, and domain tables mirror the scheme. Primary keys and foreign keys across the whole schema are `text` (32-char random), generated with the same random-string approach (crypto-secure) via Drizzle `$defaultFn` where needed.
+**Chosen: Option 2 — UUID v4, generated by the database.** Every PK and FK in the schema is `uuid`, defaulted by `pg_catalog.gen_random_uuid()`; the auth config sets `advanced.database.generateId: "uuid"` for anything Better Auth generates. Because the DB owns generation, domain tables need no Drizzle `$defaultFn` or shared generator — the default simply inherits.
 
 ### Consequences
 
 Positive:
 
-- One convention everywhere; no mixed-ID-type bugs (the known Better Auth passkey issue is exactly this class of failure — avoided by not switching).
-- No config, no schema CL change, no per-table reminders.
-- Entropy per character is slightly _higher_ than UUIDv4; collision probability is practically zero.
+- One convention everywhere — `uuid` end to end; no text-vs-uuid mismatch across the whole `user.id` → `habit.userId` → `habit_entries.userId` chain (the known Better Auth passkey issue is exactly this class of failure — structurally avoided).
+- Zero application-side ID code: `gen_random_uuid()` is free in Postgres, so there is nothing each new table must remember to do.
+- Standard format understood by every tool in the stack.
 
 Neutral:
 
 - IDs are opaque and not human-meaningful (fine for opaque keys).
-- No chronological ordering information in the id (we have `createdAt`/`happenedAt` timestamps anyway).
+- Random UUIDs carry no time-ordering — we have `createdAt`/`happenedAt` for that.
 
 Negative:
 
-- Random IDs scatter on large indexes (locality) — irrelevant at this scale; revisit only if the app ever approaches millions of rows.
+- Random UUIDs scatter on large indexes (locality) — irrelevant at this scale; revisit only if the app ever approaches millions of rows (then consider Option 3).
 
 ### Pros and Cons of the Options
 
 #### Option 1 — Keep Better Auth default
 
-- Good, because: zero configuration; domain tables just copy the same simple generator.
-- Good, because: no UUID-vs-text mismatch across the whole `user.id` → `habit.userId` → `habit_entries.userId` chain.
-- Neutral: the format is custom (not a standard) — no tooling cares about that at this scale.
+- Good, because: zero configuration; auth works out of the box.
+- Neutral: the format is custom (not a standard) — no tooling cares at this scale.
+- Bad, because: domain tables need a per-table `$defaultFn` "remember to generate" tax — exactly the drift that produced this revision.
+- Bad, because: keeping a non-standard format when the DB generates for free buys nothing.
+
+#### Option 2 — UUID v4, generated by the database
+
+- Good, because: a recognized standard; Postgres generates for free via `gen_random_uuid()`.
+- Good, because: the auth config (`generateId: "uuid"`) matches, so auth and domain never diverge; no mixed-ID risk.
+- Good, because: a DB-side default means no schema file can forget the ID generator.
+- Neutral: still random — same locality profile as Option 1.
 - Bad: none material.
-
-#### Option 2 — UUID v4
-
-- Good, because: a recognized standard format.
-- Bad, because: requires config + consistent schema-type adoption in domain tables; still random (no locality win over Option 1); mixed-ID pitfalls if any table forgets to switch.
 
 #### Option 3 — UUID v7
 
 - Good, because: time-ordered, ideal index locality at massive scale.
-- Bad, because: non-standard generator needed everywhere; complexity with zero benefit at this scale.
+- Bad, because: needs a custom `generateId` everywhere and a default helper in Postgres; complexity with zero benefit at this scale. Revisit only if locality ever matters.
 
 ---
 
