@@ -4,6 +4,10 @@
 
 - [x] Setup up biome organizeImport on save and similar formatting options.
 
+## In `@docs/decisions`
+
+- [ ] Do a Back-of-envelop Estimation on 10K MAU in `back-of-envelope.md`. [Ref: Back-of-the-envelope Estimation](https://bytebytego.com/courses/system-design-interview/back-of-the-envelope-estimation)
+
 ## In `@package/auth`
 
 - [ ] Add correct schema in `@package/auth/schema.ts` and custom column called timezone in `@package/auth/auth-schema.ts` users table which will be done in `@package/auth/src/auth.ts`.

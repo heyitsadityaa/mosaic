@@ -1,24 +1,26 @@
 {
-  "name": "mosaic",
-  "version": "0.0.0",
-  "private": true,
-  "packageManager": "pnpm@10.27.0",
-  "scripts": {
-    "build": "turbo run build",
-    "dev": "turbo run dev",
-    "lint": "biome lint .",
-    "test": "turbo run test",
-    "typecheck": "turbo run typecheck",
-    "db:generate": "pnpm --filter @mosaic/db run db:generate",
-    "db:migrate": "pnpm --filter @mosaic/db run db:migrate",
-    "db:push": "pnpm --filter @mosaic/db run db:push",
-    "db:studio": "pnpm --filter @mosaic/db run db:studio",
-    "prepare": "husky"
-  },
-  "devDependencies": {
-    "@biomejs/biome": "^2.5.13",
-    "husky": "^9.1.7",
-    "turbo": "latest",
-    "typescript": "^7.0.2"
-  }
+	"name": "mosaic",
+	"version": "0.0.0",
+	"private": true,
+	"packageManager": "pnpm@10.27.0",
+	"scripts": {
+		"build": "turbo run build",
+		"dev": "turbo run dev",
+		"lint": "biome lint .",
+		"test": "turbo run test",
+		"typecheck": "turbo run typecheck",
+		"api:dev": "pnpm --filter @mosaic/api run start:dev",
+		"api:prod": "pnpm --filter @mosaic/api run start:prod",
+		"db:generate": "pnpm --filter @mosaic/db run db:generate",
+		"db:migrate": "pnpm --filter @mosaic/db run db:migrate",
+		"db:push": "pnpm --filter @mosaic/db run db:push",
+		"db:studio": "pnpm --filter @mosaic/db run db:studio",
+		"prepare": "husky"
+	},
+	"devDependencies": {
+		"@biomejs/biome": "^2.5.13",
+		"husky": "^9.1.7",
+		"turbo": "latest",
+		"typescript": "^7.0.2"
+	}
 }
