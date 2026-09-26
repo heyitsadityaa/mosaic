@@ -8,6 +8,7 @@ import {
 	timestamp,
 	uuid,
 } from "drizzle-orm/pg-core";
+import { habit, habitEntries } from "./schema.js";
 
 export const user = pgTable("user", {
 	id: uuid("id").default(sql`pg_catalog.gen_random_uuid()`).primaryKey(),
@@ -15,12 +16,12 @@ export const user = pgTable("user", {
 	email: text("email").notNull().unique(),
 	emailVerified: boolean("email_verified").default(false).notNull(),
 	image: text("image"),
+	timezone: text("timezone").notNull(), // -- IANA name (frozen for now)
 	createdAt: timestamp("created_at").defaultNow().notNull(),
 	updatedAt: timestamp("updated_at")
 		.defaultNow()
 		.$onUpdate(() => /* @__PURE__ */ new Date())
 		.notNull(),
-	timezone: text("timezone").default("UTC").notNull(),
 });
 
 export const session = pgTable(
@@ -85,6 +86,8 @@ export const verification = pgTable(
 export const userRelations = relations(user, ({ many }) => ({
 	sessions: many(session),
 	accounts: many(account),
+	habits: many(habit),
+	habitEntries: many(habitEntries),
 }));
 
 export const sessionRelations = relations(session, ({ one }) => ({
