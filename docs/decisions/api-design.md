@@ -28,13 +28,13 @@ Two decision documents bind everything downstream:
 
 The whole API splits responsibilities down one line: the client renders and optimistically updates; the server is the only source of truth for identity, ownership, the calendar, and the day-lock.
 
-| Concern | Client | Server |
-| --- | --- | --- |
-| Identity | never transmits a user id; holds the session via the expo plugin | resolves session from headers; scopes every query to it |
-| Ownership | treats 404 as "gone for me" | excludes other users' rows by construction |
-| Calendar / "today" | shows the local day as a hint | derives `entryDate` from the session's frozen timezone |
-| Writes | sends only the value; optimistic insert | stamps the day, applies the lock, rejects violations |
-| Read model | renders day-cells and a few numbers | aggregates (`GROUP BY`, window queries) — never ships raw history for display |
+| Concern            | Client                                                           | Server                                                                        |
+| ------------------ | ---------------------------------------------------------------- | ----------------------------------------------------------------------------- |
+| Identity           | never transmits a user id; holds the session via the expo plugin | resolves session from headers; scopes every query to it                       |
+| Ownership          | treats 404 as "gone for me"                                      | excludes other users' rows by construction                                    |
+| Calendar / "today" | shows the local day as a hint                                    | derives `entryDate` from the session's frozen timezone                        |
+| Writes             | sends only the value; optimistic insert                          | stamps the day, applies the lock, rejects violations                          |
+| Read model         | renders day-cells and a few numbers                              | aggregates (`GROUP BY`, window queries) — never ships raw history for display |
 
 ---
 
@@ -104,7 +104,7 @@ Better Auth already ships its own HTTP routes (sign-in, callback, session, ...) 
 
 ### Decision Outcome
 
-**Chosen: Option 2 — Better Auth owns `/auth`, unversioned.** The application authors *no auth controller and no auth endpoints*; a global guard delegates to `auth.api.getSession`, forwarding the request headers. `/auth` is a deliberate carve-out from `/api/v1`: **the app versions only the contracts it authors.** Better Auth's route set is already versioned — by the dependency itself — and pinned by the lockfile. Our `/v1/` stamp on it would be a promise we can't keep: their major-version changes own the breaks.
+**Chosen: Option 2 — Better Auth owns `/auth`, unversioned.** The application authors _no auth controller and no auth endpoints_; a global guard delegates to `auth.api.getSession`, forwarding the request headers. `/auth` is a deliberate carve-out from `/api/v1`: **the app versions only the contracts it authors.** Better Auth's route set is already versioned — by the dependency itself — and pinned by the lockfile. Our `/v1/` stamp on it would be a promise we can't keep: their major-version changes own the breaks.
 
 ### Pros and Cons of the Options
 
@@ -124,21 +124,21 @@ Better Auth already ships its own HTTP routes (sign-in, callback, session, ...) 
 
 ### Context and Problem Statement
 
-The first draft put `:userId` in every path (`/habits/:userId/:id`, ...) with a hand-waved "server must verify it matches the session". Authentication (who is calling) is Better Auth's job; authorization (may they touch *this* resource) is ours. The open question: does the URL carry the user at all?
+The first draft put `:userId` in every path (`/habits/:userId/:id`, ...) with a hand-waved "server must verify it matches the session". Authentication (who is calling) is Better Auth's job; authorization (may they touch _this_ resource) is ours. The open question: does the URL carry the user at all?
 
 ### Decision Outcome
 
 **Chosen: `userId` is banished from the URL — the session is the identity.**
 
 - **Authentication** is the global Better Auth guard: no session → **401**, with no business code involved.
-- **Authorization is folded into the data layer**: every resource lookup is *scoped to the session user*. `WHERE ... AND userId = <session>` means another user's row is simply not found → **404**. There is no separate load-then-compare-then-403 choreography.
+- **Authorization is folded into the data layer**: every resource lookup is _scoped to the session user_. `WHERE ... AND userId = <session>` means another user's row is simply not found → **404**. There is no separate load-then-compare-then-403 choreography.
 - **The URL is a hint, the DB is truth**: even with `:habitId` in the path, the effective checks are data-derived (the entry's actual `habitId`, the habit's actual `userId`) compared against the session. Path params are fail-fast sugar.
 - **Ownership chain `user -> habit -> entry`** is enforced at each hop in the queries — a client cannot reach another user's habit or entry by supplying any id.
 
 ### Consequences
 
 - The client transmits no identity at all — the whole "does path-userId == session-userId?" failure state is structurally impossible.
-- The day-lock (DB §5) and ownership compose cleanly: reads are scoped by user, writes are scoped by user *and* locked to today.
+- The day-lock (DB §5) and ownership compose cleanly: reads are scoped by user, writes are scoped by user _and_ locked to today.
 - 404 vs 403: "you can't see it" and "it doesn't exist" are the same response by design — no existence leakage, one error pattern to handle.
 
 ---
@@ -160,12 +160,12 @@ The day-lock (DB §5) makes only "today in the user's timezone" writable. What d
 
 ### Edge cases enumerated
 
-| Scenario | Behavior |
-| --- | --- |
-| Two sessions, same day | two POSTs, two rows; the day-cell sums both |
-| Retried save after timeout | idempotent — the value is re-set, nothing accumulates |
-| Midnight race | rejected (server clock is law); optimistic UI reconciles |
-| Edit of yesterday's row | rejected — the `:id` exists but the lock forbids it (status code pending, §12) |
+| Scenario                   | Behavior                                                                       |
+| -------------------------- | ------------------------------------------------------------------------------ |
+| Two sessions, same day     | two POSTs, two rows; the day-cell sums both                                    |
+| Retried save after timeout | idempotent — the value is re-set, nothing accumulates                          |
+| Midnight race              | rejected (server clock is law); optimistic UI reconciles                       |
+| Edit of yesterday's row    | rejected — the `:id` exists but the lock forbids it (status code pending, §12) |
 
 ---
 
@@ -188,17 +188,17 @@ The first draft listed `202 or 204` and `200, 202, or 204` — option lists, not
 
 ### The change-the-count example (number habit: 5 -> 10)
 
-A `number` habit's row *is* `{ count }` — one writable value field per habit (the immutable `valueType`). So the payload is `{ count: 10 }` **under either verb**: "full representation" and "change set" coincide for entries. The verbs only differ on the *other* writable columns — habits have `name` + `color`, so a rename under PUT must resend `color` (or strict-PUT resets it); under PATCH a rename sends `{ name }` and color survives. That, not payload size, is why PATCH wins.
+A `number` habit's row _is_ `{ count }` — one writable value field per habit (the immutable `valueType`). So the payload is `{ count: 10 }` **under either verb**: "full representation" and "change set" coincide for entries. The verbs only differ on the _other_ writable columns — habits have `name` + `color`, so a rename under PUT must resend `color` (or strict-PUT resets it); under PATCH a rename sends `{ name }` and color survives. That, not payload size, is why PATCH wins.
 
 Column fate is governed by the **writable-fields contract**, not by the verb:
 
-| Column | After PATCH (or PUT) count 5->10 | Why |
-| --- | --- | --- |
-| `count` | `10` | the whole point — the only writable value field |
-| `happenedAt` | unchanged | the recorded *instant of the event* — an append-model fact, not editable; changing it would decouple from the frozen `entryDate` bucket |
-| `createdAt` | unchanged | creation fact, immutable by definition |
-| `updatedAt` | now | exactly its job — the server sets it on every successful update, verb-agnostic |
-| `entryDate`, `id`, `habitId`, `userId` | unchanged | server-owned; `entryDate` is the frozen bucket |
+| Column                                 | After PATCH (or PUT) count 5->10 | Why                                                                                                                                     |
+| -------------------------------------- | -------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------- |
+| `count`                                | `10`                             | the whole point — the only writable value field                                                                                         |
+| `happenedAt`                           | unchanged                        | the recorded _instant of the event_ — an append-model fact, not editable; changing it would decouple from the frozen `entryDate` bucket |
+| `createdAt`                            | unchanged                        | creation fact, immutable by definition                                                                                                  |
+| `updatedAt`                            | now                              | exactly its job — the server sets it on every successful update, verb-agnostic                                                          |
+| `entryDate`, `id`, `habitId`, `userId` | unchanged                        | server-owned; `entryDate` is the frozen bucket                                                                                          |
 
 ### Consequences
 
@@ -211,7 +211,7 @@ Column fate is governed by the **writable-fields contract**, not by the verb:
 
 ### Context and Problem Statement
 
-The dashboard shows heatmaps; the analytics page shows stats. Where do those numbers come from — and where are they *computed*? The worry that drove the question: "server-side computation means spinners and delays on the client".
+The dashboard shows heatmaps; the analytics page shows stats. Where do those numbers come from — and where are they _computed_? The worry that drove the question: "server-side computation means spinners and delays on the client".
 
 ### Considered Options
 
@@ -225,7 +225,7 @@ The dashboard shows heatmaps; the analytics page shows stats. Where do those num
 - `GET /habits/:id/heatmap?from&to` — array of `{ date, value }` day-cells (server `GROUP BY entryDate`; the endpoint Database Decision §4 already named).
 - `GET /habits/:id/stats?period=year|month|week` — streak, total, average-per-day for the period (SQL window/aggregate queries).
 
-**The latency reframe — the wait is the network, not the CPU.** Whatever the design, a habit's history is not on the phone; a screen that needs it *waits for a round trip*. Client-side aggregation cannot remove that wait — it can only change what crosses the wire:
+**The latency reframe — the wait is the network, not the CPU.** Whatever the design, a habit's history is not on the phone; a screen that needs it _waits for a round trip_. Client-side aggregation cannot remove that wait — it can only change what crosses the wire:
 
 - Server-aggregated payloads are **constant-size**: a year of heatmap = 365 cells (a few KB); lifetime stats = a handful of numbers. They do not grow as the app ages.
 - Raw-history payloads are **linear in history** — thousands of rows by year three, shipped to the device so the client can run a `GROUP BY` the database already had an index for.
@@ -266,33 +266,33 @@ Hard-deleting the habit (CASCADE the history) was rejected: it silently destroys
 
 ### Context and Problem Statement
 
-Deployments and uptime monitors need a probe that answers "is the service up" without a session and without touching the versioned contract. The canvas's backend checklist lists health checks explicitly, but the endpoint inventory (§1) has none — and the inventory rule ("an endpoint exists only if a screen calls it") has no slot for an endpoint no screen calls.
+Deployments and uptime monitors need a probe that answers "is the service up" without a session. The canvas's backend checklist lists health checks explicitly, but the endpoint inventory (§1) has none — and the inventory rule ("an endpoint exists only if a screen calls it") has no slot for an endpoint no screen calls.
 
 ### Considered Options
 
-1. **`GET /health`** — root-level, outside `/api/v1`, unauthenticated; a second carve-out beside `/api/auth`.
-2. **`GET /api/v1/health`** — inside the versioned, guarded surface like any resource.
+1. **`GET /api/v1/health`** — versioned, unauthenticated; part of the API surface.
+2. **`GET /health`** — root-level and unversioned; a carve-out beside `/api/auth`.
 
 ### Decision Outcome
 
-**Chosen: Option 1 — `GET /health`, unversioned and unauthenticated.** It is the deliberate exception to the inventory rule: probes carry no session, so a guarded health route would answer 401 instead of "up", and a monitor could not tell "down" from "locked out". Healthy → **200** with a minimal body (`{ status: "ok" }`); unhealthy → **503**. It lives beside `/api/auth` as the second carve-out from `/api/v1`: infrastructure talks to both, product endpoints live under `/api/v1`.
+**Chosen: Option 1 — `GET /api/v1/health`, versioned and unauthenticated.** It is part of the API surface but remains outside session-protected business routes: probes carry no session, so a guarded health route would answer 401 instead of "up", and a monitor could not tell "down" from "locked out". Healthy → **200** with a minimal body (`{ status: "ok" }`); unhealthy → **503**. The API prefix and version make the route consistent with the rest of the application-owned contract.
 
 ### Pros and Cons of the Options
 
-#### Root `/health` — Chosen
+#### Versioned `/api/v1/health` — Chosen
 
-- Good, because: load balancers and orchestrators get a truthfully unauthenticated probe; health has no versions and never needs a bump.
-- Bad, because: it is the second exception to the versioned surface — accepted, and recorded alongside the first in §3.
+- Good, because: load balancers and orchestrators get a truthfully unauthenticated probe while the route remains under the API's standard prefix and version.
+- Bad, because: a future breaking change to the response contract may require versioning the health route as well.
 
-#### Versioned `/api/v1/health`
+#### Root `/health`
 
-- Good, because: one prefix, no exceptions.
-- Bad, because: it must be unauthenticated anyway (probes), making it a guard-shaped hole in the guard; versioning an ops probe is meaningless churn.
+- Good, because: infrastructure gets a short, stable path outside application versioning.
+- Bad, because: it creates another unversioned carve-out and diverges from the API's documented path convention.
 
 ### Consequences
 
 - Phase 1 is **liveness only** (the process responds). Deep readiness (checking DB connectivity) is deferred to the ops/deployment node on the backend checklist, not locked here.
-- No client code ever calls `/health`; the mobile app does not learn it exists.
+- No client code ever calls `/api/v1/health`; the mobile app does not learn it exists.
 
 ---
 
@@ -300,22 +300,22 @@ Deployments and uptime monitors need a probe that answers "is the service up" wi
 
 Canonical, matching the decisions above. Phase 1 exercises `timer` only; `binary`/`number`/`options` come online as columns + validation guards (DB §6).
 
-| Method | Path | Purpose | Client sends | Returns |
-| --- | --- | --- | --- | --- |
-| `POST` | `/api/v1/habits` | create habit (immutable `valueType`) | `{ name, valueType, options?, color? }` | 201 + habit |
-| `GET` | `/api/v1/habits` | list my habits (excludes archived) | — | 200 + habits |
-| `GET` | `/api/v1/habits/:id` | habit detail | — | 200 + habit |
-| `PATCH` | `/api/v1/habits/:id` | rename / recolor | `{ name?, color? }` | 204 |
-| `DELETE` | `/api/v1/habits/:id` | archive (soft) | — | 204 |
-| `GET` | `/api/v1/habits/:id/heatmap?from&to` | day-cells | — | 200 + cells |
-| `GET` | `/api/v1/habits/:id/stats?period=` | streak / total / avg | — | 200 + stats |
-| `POST` | `/api/v1/entries/:habitId` | append a session | `{ durationSecs }` | 201 + row |
-| `GET` | `/api/v1/entries/:habitId?from&to` | raw rows (today's edit view, history) | — | 200 + rows |
-| `PATCH` | `/api/v1/entries/:habitId/:id` | fix today's row value | `{ durationSecs }` | 204 |
-| `DELETE` | `/api/v1/entries/:habitId/:id` | remove today's row | — | 204 |
-| `GET` | `/health` | liveness probe — unversioned, unauthenticated (§9) | — | 200 + `{ status: "ok" }` / 503 |
+| Method   | Path                                 | Purpose                                          | Client sends                            | Returns                        |
+| -------- | ------------------------------------ | ------------------------------------------------ | --------------------------------------- | ------------------------------ |
+| `POST`   | `/api/v1/habits`                     | create habit (immutable `valueType`)             | `{ name, valueType, options?, color? }` | 201 + habit                    |
+| `GET`    | `/api/v1/habits`                     | list my habits (excludes archived)               | —                                       | 200 + habits                   |
+| `GET`    | `/api/v1/habits/:id`                 | habit detail                                     | —                                       | 200 + habit                    |
+| `PATCH`  | `/api/v1/habits/:id`                 | rename / recolor                                 | `{ name?, color? }`                     | 204                            |
+| `DELETE` | `/api/v1/habits/:id`                 | archive (soft)                                   | —                                       | 204                            |
+| `GET`    | `/api/v1/habits/:id/heatmap?from&to` | day-cells                                        | —                                       | 200 + cells                    |
+| `GET`    | `/api/v1/habits/:id/stats?period=`   | streak / total / avg                             | —                                       | 200 + stats                    |
+| `POST`   | `/api/v1/entries/:habitId`           | append a session                                 | `{ durationSecs }`                      | 201 + row                      |
+| `GET`    | `/api/v1/entries/:habitId?from&to`   | raw rows (today's edit view, history)            | —                                       | 200 + rows                     |
+| `PATCH`  | `/api/v1/entries/:habitId/:id`       | fix today's row value                            | `{ durationSecs }`                      | 204                            |
+| `DELETE` | `/api/v1/entries/:habitId/:id`       | remove today's row                               | —                                       | 204                            |
+| `GET`    | `/api/v1/health`                     | liveness probe — versioned, unauthenticated (§9) | —                                       | 200 + `{ status: "ok" }` / 503 |
 
-Invariant to type-check every line: **no `userId` anywhere, no dates on writes, authorization by scoped queries, create is always POST / edit-and-delete address an existing `:id`.** The `/health` row is the documented exception (§9): no session, no owner, no version.
+Invariant to type-check every line: **no `userId` anywhere, no dates on writes, authorization by scoped queries, create is always POST / edit-and-delete address an existing `:id`.** The `/api/v1/health` row is the documented liveness exception (§9): no session and no owner.
 
 ---
 
@@ -323,12 +323,12 @@ Invariant to type-check every line: **no `userId` anywhere, no dates on writes, 
 
 _(Kept so future-me can see the trail, including the missteps.)_
 
-- **"`PUT /habits/:userId/:id` etc."** The first draft put a user id in every path and only *wondered* about verifying it. The unlock was separating authentication from authorization: Better Auth answers who; the queries answer what-you-may-touch. Once `userId` was banished, the "does the path match the session?" failure state stopped existing. The URL is a hint — the DB is truth.
+- **"`PUT /habits/:userId/:id` etc."** The first draft put a user id in every path and only _wondered_ about verifying it. The unlock was separating authentication from authorization: Better Auth answers who; the queries answer what-you-may-touch. Once `userId` was banished, the "does the path match the session?" failure state stopped existing. The URL is a hint — the DB is truth.
 - **"`202 or 204`"** Listing options instead of choosing. 202 has a meaning ("accepted, will process later") that this synchronous API never uses. The boring default (204) was right all along.
 - **"`habit_entries` / `habits_entries` / `entires`"** Three spellings of one resource across three drafts — proof the naming convention wasn't pinned. Hence: spellings frozen, underscore-free plural nouns, and an explicit "URL may differ from table" rule.
 - **"The day-lock is intentional; better than the user entering data and getting an error."** The client-time instinct — let the user pick the calendar day and reject nonsense — was rejected in favor of the server stamping the day. The payoff nobody saw coming: the write body shrinks to `{ value }` and there is no date field to disagree about. Constraints that remove contract surface are wins.
 - **"PATCH removes the previous data, so use PUT."** False, and the record says so plainly: PATCH only touches the fields you send. The real analysis (count 5->10) showed payloads coincide for entries and diverge only for multi-field habits — and there, PUT's full-replace is the annoyance (resend `color`), not PATCH. The flop landed on PATCH.
-- **"Server-side aggregation means spinners and a slow client."** The honest reframe: the client waits on the *network* either way; server aggregation shrinks the payload and — via the day-lock — makes past reads cacheable forever. Only today is ever live; the spinner register has exactly three entries, two of them cold-start, one a rare race.
+- **"Server-side aggregation means spinners and a slow client."** The honest reframe: the client waits on the _network_ either way; server aggregation shrinks the payload and — via the day-lock — makes past reads cacheable forever. Only today is ever live; the spinner register has exactly three entries, two of them cold-start, one a rare race.
 
 ---
 
