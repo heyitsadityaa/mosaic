@@ -9,6 +9,7 @@
 		"lint": "biome lint .",
 		"test": "turbo run test",
 		"typecheck": "turbo run typecheck",
+		"mobile:start": "pnpm --filter @mosaic/mobile expo start",
 		"api:dev": "pnpm --filter @mosaic/api run start:dev",
 		"api:prod": "pnpm --filter @mosaic/api run start:prod",
 		"db:generate": "pnpm --filter @mosaic/db run db:generate",
