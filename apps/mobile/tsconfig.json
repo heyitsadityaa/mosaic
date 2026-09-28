@@ -1,20 +1,16 @@
 {
-  "extends": "expo/tsconfig.base",
-  "compilerOptions": {
-    "strict": true,
-    "paths": {
-      "@/*": [
-        "./src/*"
-      ],
-      "@/assets/*": [
-        "./assets/*"
-      ]
-    }
-  },
-  "include": [
-    "**/*.ts",
-    "**/*.tsx",
-    ".expo/types/**/*.ts",
-    "expo-env.d.ts"
-  ]
+	// Intentionally extends expo/tsconfig.base instead of ../../tsconfig.base.json.
+	// Expo needs moduleResolution "bundler", module "preserve", noEmit, and the
+	// "react-native" export condition -- the base config's NodeNext setting breaks
+	// the Metro bundler and the expo-router entrypoint.
+	"extends": "expo/tsconfig.base",
+	"compilerOptions": {
+		// expo/tsconfig.base does not enable strict, so restate it here.
+		"strict": true,
+		"paths": {
+			"@/*": ["./src/*"],
+			"@/assets/*": ["./assets/*"]
+		}
+	},
+	"include": ["**/*.ts", "**/*.tsx", ".expo/types/**/*.ts", "expo-env.d.ts"]
 }

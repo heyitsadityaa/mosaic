@@ -1,12 +1,12 @@
 {
-  "extends": "../../tsconfig.base.json",
-  "compilerOptions": {
-    "rootDir": "src",
-    "outDir": "dist",
-    "types": ["node"],
-    // Keep composite/declaration disabled: https://github.com/better-auth/better-auth/issues/4654
-    "composite": false,
-    "declaration": false
-  },
-  "include": ["src/*.ts"]
+	"extends": "../../tsconfig.base.json",
+	"compilerOptions": {
+		"rootDir": "src",
+		"outDir": "dist",
+		"types": ["node"],
+		// Keep composite/declaration disabled: https://github.com/better-auth/better-auth/issues/4654
+		"composite": false,
+		"declaration": false
+	},
+	"include": ["src/**/*.ts"]
 }

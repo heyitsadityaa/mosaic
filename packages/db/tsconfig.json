@@ -1,9 +1,10 @@
 {
-  "extends": "../../tsconfig.base.json",
-  "compilerOptions": {
-    "rootDir": "src",
-    "outDir": "dist",
-    "types": ["node"]
-  },
-  "include": ["src/*.ts", "src/schema/auth-schema.ts", "src/schema/schema.ts"]
+	"extends": "../../tsconfig.base.json",
+	"compilerOptions": {
+		"rootDir": "src",
+		"outDir": "dist",
+		"declaration": true,
+		"types": ["node"]
+	},
+	"include": ["src/**/*.ts"]
 }
