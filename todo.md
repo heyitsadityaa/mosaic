@@ -15,7 +15,7 @@
 
 ## In `@package/db`
 
-- [ ] Complete schema/schema.ts and db:push.
+- [x] Complete schema/schema.ts and db:push.
 - [ ] Writing e2e to test db connection and seeding data.
 
 ## In `@apps/api`

@@ -152,7 +152,7 @@ Better Auth defaults to database sessions (opaque token in the `session` table) 
 
 ### Decision Outcome
 
-**Chosen: stateful database sessions** (Better Auth default; unchanged in `auth.ts`). For a consistency-tracking app this is the disqualifier: a leaked JWT keeps writing entries until it *expires*, which would let it write through the day-end lock — the server must stay the authority.
+**Chosen: stateful database sessions** (Better Auth default; unchanged in `auth.ts`). For a consistency-tracking app this is the disqualifier: a leaked JWT keeps writing entries until it _expires_, which would let it write through the day-end lock — the server must stay the authority.
 
 ### Consequences — impact on the application
 
@@ -179,7 +179,7 @@ Better Auth defaults to database sessions (opaque token in the `session` table) 
 
 ### Context and Problem Statement
 
-The mobile client redirects back to the app via a **custom URI scheme** (`myapp://`, in `trustedOrigins`). Deep links into custom schemes are an interception surface on Android/iOS. The authorization `code` travels through that redirect — what stops a hijacker from redeeming it?
+The mobile client redirects back to the app via a **custom URI scheme** (`mobile://`, in `trustedOrigins`). Deep links into custom schemes are an interception surface on Android/iOS. The authorization `code` travels through that redirect — what stops a hijacker from redeeming it?
 
 ### Decision Drivers
 
@@ -220,7 +220,7 @@ The roadmap plans a NestJS backend (not yet in the repo). Auth could live as a N
 
 ### Decision Outcome
 
-**Chosen: Option 2 — shared package.** This is the current implementation: `packages/auth` exports the `auth` instance (server) and a `createClient` factory (client), with the `Session` type inferred from the server. Where it's *mounted* (standalone server vs inside NestJS) is deliberately open — both are one-liners later.
+**Chosen: Option 2 — shared package.** This is the current implementation: `packages/auth` exports the `auth` instance (server) and a `createClient` factory (client), with the `Session` type inferred from the server. Where it's _mounted_ (standalone server vs inside NestJS) is deliberately open — both are one-liners later.
 
 ### Consequences
 
@@ -253,10 +253,10 @@ The roadmap plans a NestJS backend (not yet in the repo). Auth could live as a N
 Ground truth from `packages/auth`, matching the decisions above:
 
 - **Framework:** Better Auth v1.7.5; `drizzleAdapter(db, { provider: "pg" })` over `@mosaic/db`.
-- **Mobile:** `expo()` plugin; `trustedOrigins` = `myapp://`, plus `exp://` wildcards in development.
+- **Mobile:** `expo()` plugin; `trustedOrigins` = `mobile://`, plus `exp://` wildcards in development.
 - **Providers:** Google only (`socialProviders.google`), client ID/secret from env, validated at module load.
 - **Sessions:** Better Auth default — opaque token rows in `session`, computed `expiresAt`; PKCE/`state` handled internally (Decision 4).
-- **User model:** `additionalFields.timezone` (string, required, default `"UTC"`) — feeds the frozen-timezone lock of `database-decisions.md` §5.
+- **User model:** `additionalFields.timezone` (string, required, `input: false`, default `"Asia/Kolkata"`) — feeds the frozen-timezone lock of `database-decisions.md` §5. The default is a **placeholder**: the client does not yet report the device's IANA zone, so the value is server-owned and never client-settable. Replacing it with the real device zone means dropping `input: false` and supplying a validated zone per sign-up.
 - **IDs:** `uuid` columns with `pg_catalog.gen_random_uuid()` defaults, and `advanced.database.generateId: "uuid"` in the auth config — consistent with `database-decisions.md` §8/§9.
 
 ---
@@ -265,7 +265,7 @@ Ground truth from `packages/auth`, matching the decisions above:
 
 ### Context and Problem Statement
 
-Better Auth answers *who* is calling; it does not answer *what they may touch*. Two things were left unspecified: where the auth endpoints actually live on the wire, and how "authenticated" turns into "authorized" once the backend exists.
+Better Auth answers _who_ is calling; it does not answer _what they may touch_. Two things were left unspecified: where the auth endpoints actually live on the wire, and how "authenticated" turns into "authorized" once the backend exists.
 
 ### Decision Outcome
 

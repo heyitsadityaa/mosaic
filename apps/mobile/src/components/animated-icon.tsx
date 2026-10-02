@@ -1,6 +1,6 @@
 import { Image } from 'expo-image';
 import * as SplashScreen from 'expo-splash-screen';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Dimensions, StyleSheet, View } from 'react-native';
 import Animated, { Easing, Keyframe } from 'react-native-reanimated';
 import { scheduleOnRN } from 'react-native-worklets';
@@ -8,9 +8,29 @@ import { scheduleOnRN } from 'react-native-worklets';
 const INITIAL_SCALE_FACTOR = Dimensions.get('screen').height / 90;
 const DURATION = 600;
 
-export function AnimatedSplashOverlay() {
+type AnimatedSplashOverlayProps = {
+  /**
+   * Whether the app has resolved whatever it waits on before revealing itself.
+   * The native splash stays up until this flips, and this component is the only
+   * thing that hides it, so it must stay mounted and accept a late `true`.
+   */
+  ready?: boolean;
+};
+
+export function AnimatedSplashOverlay({ ready = true }: AnimatedSplashOverlayProps) {
   const [animate, setAnimate] = useState(false);
   const [visible, setVisible] = useState(true);
+  const [laidOut, setLaidOut] = useState(false);
+
+  // Driven by an effect rather than `onLayout` because layout only fires once:
+  // `ready` commonly flips to true after the first layout pass.
+  useEffect(() => {
+    if (!ready || !laidOut || animate) return;
+
+    SplashScreen.hideAsync().finally(() => {
+      setAnimate(true);
+    });
+  }, [animate, laidOut, ready]);
 
   if (!visible) return null;
 
@@ -47,13 +67,7 @@ export function AnimatedSplashOverlay() {
       {image}
     </Animated.View>
   ) : (
-    <View
-      onLayout={() => {
-        SplashScreen.hideAsync().finally(() => {
-          setAnimate(true);
-        });
-      }}
-      style={styles.splashOverlay}>
+    <View onLayout={() => setLaidOut(true)} style={styles.splashOverlay}>
       {image}
     </View>
   );
