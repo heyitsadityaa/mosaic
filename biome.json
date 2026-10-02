@@ -1,7 +1,13 @@
 {
 	"$schema": "https://biomejs.dev/schemas/2.5.13/schema.json",
 	"files": {
-		"includes": ["**", "!**/.agents", "!**/.turbo", "!**/dist"]
+		"includes": [
+			"**",
+			"!**/.agents",
+			"!**/.turbo",
+			"!**/dist",
+			"!apps/mobile/android"
+		]
 	},
 	"assist": {
 		"actions": {
