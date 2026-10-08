@@ -27,3 +27,4 @@ jobs:
         with:
           model: opencode/big-pickle
           prompt: /review-pr
+          use-github-token: 'true'
