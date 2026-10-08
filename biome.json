@@ -24,5 +24,10 @@
 				"noSvgWithoutTitle": "off"
 			}
 		}
+	},
+	"javascript": {
+		"parser": {
+			"unsafeParameterDecoratorsEnabled": true
+		}
 	}
 }
