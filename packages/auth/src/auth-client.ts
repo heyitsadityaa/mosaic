@@ -19,12 +19,12 @@ type AuthClientOptions<Plugins extends BetterAuthClientPlugin[] = []> = {
 
 export const createClient = <Plugins extends BetterAuthClientPlugin[] = []>({
 	baseURL,
-	plugins
+	plugins,
 }: AuthClientOptions<Plugins>) =>
 	createBetterAuthClient({
 		baseURL,
 		plugins: [inferAdditionalFields<typeof auth>(), ...(plugins ?? [])] as [
 			InferredFields,
-			...Plugins
-		]
+			...Plugins,
+		],
 	});

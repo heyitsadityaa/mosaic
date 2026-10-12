@@ -46,7 +46,7 @@ export const auth = betterAuth({
 		provider: "pg",
 		// Required: the adapter validates the store against this schema, and
 		// `drizzle-orm/neon-http` does not expose one on the db instance.
-		schema: { account, session, user, verification }
+		schema: { account, session, user, verification },
 	}),
 	trustedOrigins: [
 		// Must match the "scheme" in apps/mobile/app.json. Better Auth only

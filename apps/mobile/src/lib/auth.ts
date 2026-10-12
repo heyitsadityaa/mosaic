@@ -1,5 +1,5 @@
-import { createClient } from "@mosaic/auth";
 import { expoClient } from "@better-auth/expo/client";
+import { createClient } from "@mosaic/auth";
 import * as SecureStore from "expo-secure-store";
 
 const baseURL = process.env.EXPO_PUBLIC_BETTER_AUTH_URL;
@@ -15,5 +15,5 @@ if (!baseURL) {
  */
 export const authClient = createClient({
 	baseURL,
-	plugins: [expoClient({ storage: SecureStore })]
+	plugins: [expoClient({ storage: SecureStore })],
 });
