@@ -1,0 +1,172 @@
+name: OpenCode Autonomous Lifecycle
+
+on:
+  # 1. Weekly scan (Sunday 00:00 UTC)
+  schedule:
+    - cron: "0 0 * * 0"
+
+  # 2. Manual workflow trigger (run scan or fix specific issue)
+  workflow_dispatch:
+    inputs:
+      action:
+        description: "Action to run"
+        required: true
+        type: choice
+        options:
+          - scan
+          - fix-issue
+      issue_number:
+        description: "Issue number (required if action is fix-issue)"
+        required: false
+        type: number
+
+  # 3. Issue assigned or labeled
+  issues:
+    types: [assigned, labeled]
+
+  # 4. Issue comment (/oc fix or /opencode fix)
+  issue_comment:
+    types: [created]
+
+  # 5. Pull request review
+  pull_request:
+    types: [opened, synchronize]
+
+permissions:
+  contents: write
+  issues: write
+  pull-requests: write
+  security-events: write
+  id-token: write
+
+jobs:
+  # ─── JOB 1: CODEBASE SCAN & PRIVATE SECURITY ADVISORIES ──────────────
+  scan-and-report:
+    name: "Weekly Codebase Scan"
+    if: >
+      github.event_name == 'schedule' ||
+      (github.event_name == 'workflow_dispatch' && github.event.inputs.action == 'scan')
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: OpenCode Codebase Scan
+        uses: anomalyco/opencode/github@latest
+        env:
+          OPENCODE_API_KEY: ${{ secrets.OPENCODE_API_KEY }}
+          GITHUB_TOKEN: ${{ github.token }}
+        with:
+          model: opencode/big-pickle
+          prompt: >
+            Perform a thorough static analysis scan of the repository.
+            Categorize any findings strictly as follows:
+
+            1. CRITICAL OR HIGH-SEVERITY SECURITY VULNERABILITIES:
+               NEVER report these by creating a public GitHub Issue.
+               Instead, report them privately directly to the repository's Security tab
+               as a draft Repository Security Advisory using GitHub CLI / API:
+               gh api repos/${{ github.repository }}/security-advisories -X POST \
+                 -f summary="<Brief vulnerability summary>" \
+                 -f description="<Impact, affected files/components, reproduction steps, and remediation>" \
+                 -f severity="<critical|high>"
+
+            2. GENERAL BUGS, CODE DEFECTS & REGRESSIONS:
+               Create a standard GitHub Issue detailing the problem, affected files,
+               and suggested fix. Attach the labels "bug" and "automated-scan".
+
+  # ─── JOB 2: RESOLVE ASSIGNED OR TAGGED ISSUE ─────────────────────────
+  resolve-issue:
+    name: "Resolve Issue & Open PR"
+    if: >
+      (github.event_name == 'issues' && (
+        contains(fromJson('["opencode", "opencode-agent", "opencode-agent[bot]"]'), github.event.assignee.login) ||
+        github.event.label.name == 'opencode'
+      )) ||
+      (github.event_name == 'issue_comment' &&
+        contains(fromJson('["OWNER", "MEMBER", "COLLABORATOR"]'), github.event.comment.author_association) &&
+        (startsWith(github.event.comment.body, '/oc fix') || startsWith(github.event.comment.body, '/opencode fix'))
+      ) ||
+      (github.event_name == 'workflow_dispatch' && github.event.inputs.action == 'fix-issue' && github.event.inputs.issue_number != '')
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+
+      - name: Determine Target Issue Info
+        id: target
+        run: |
+          if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
+            echo "number=${{ github.event.inputs.issue_number }}" >> "$GITHUB_OUTPUT"
+            echo "title=Issue #${{ github.event.inputs.issue_number }}" >> "$GITHUB_OUTPUT"
+            echo "instruction=Resolve issue #${{ github.event.inputs.issue_number }}" >> "$GITHUB_OUTPUT"
+            echo "requester=${{ github.actor }}" >> "$GITHUB_OUTPUT"
+          elif [ "${{ github.event_name }}" = "issue_comment" ]; then
+            echo "number=${{ github.event.issue.number }}" >> "$GITHUB_OUTPUT"
+            echo "title=${{ github.event.issue.title }}" >> "$GITHUB_OUTPUT"
+            echo "instruction=${{ github.event.comment.body }}" >> "$GITHUB_OUTPUT"
+            echo "requester=${{ github.event.comment.user.login }}" >> "$GITHUB_OUTPUT"
+          else
+            echo "number=${{ github.event.issue.number }}" >> "$GITHUB_OUTPUT"
+            echo "title=${{ github.event.issue.title }}" >> "$GITHUB_OUTPUT"
+            echo "instruction=${{ github.event.issue.body }}" >> "$GITHUB_OUTPUT"
+            echo "requester=${{ github.event.issue.user.login }}" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: OpenCode Generate Code Fix
+        uses: anomalyco/opencode/github@latest
+        id: opencode_fix
+        env:
+          OPENCODE_API_KEY: ${{ secrets.OPENCODE_API_KEY }}
+          GITHUB_TOKEN: ${{ github.token }}
+        with:
+          model: opencode/big-pickle
+          prompt: >
+            Resolve Issue #${{ steps.target.outputs.number }}: "${{ steps.target.outputs.title }}".
+            Context and instructions: "${{ steps.target.outputs.instruction }}".
+            Apply only the minimal required fix without altering unrelated files.
+
+      - name: Create Pull Request for Human Review
+        uses: peter-evans/create-pull-request@v6
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          commit-message: "fix: autonomous OpenCode resolution for Issue #${{ steps.target.outputs.number }}"
+          title: "🤖 OpenCode Fix: Issue #${{ steps.target.outputs.number }}"
+          body: |
+            Autonomous PR generated by OpenCode for Issue #${{ steps.target.outputs.number }}.
+
+            **Requested by:** @${{ steps.target.outputs.requester }}
+            **Reviewer:** @heyitsadityaa
+
+            Please review the changes. Only the maintainer can approve and merge.
+          branch: opencode-fix-issue-${{ steps.target.outputs.number }}
+          delete-branch: true
+          reviewers: heyitsadityaa
+
+  # ─── JOB 3: PULL REQUEST REVIEW ──────────────────────────────────────
+  review-pull-request:
+    name: "OpenCode PR Review"
+    if: >
+      github.event_name == 'pull_request' &&
+      github.actor != 'dependabot[bot]' &&
+      github.event.pull_request.user.login != 'dependabot[bot]' &&
+      github.event.pull_request.user.login != 'dependabot' &&
+      github.event.pull_request.user.login != 'opencode-agent[bot]' &&
+      github.event.pull_request.user.login != 'app/opencode-agent'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: OpenCode Automated PR Review
+        uses: anomalyco/opencode/github@latest
+        env:
+          OPENCODE_API_KEY: ${{ secrets.OPENCODE_API_KEY }}
+          GITHUB_TOKEN: ${{ github.token }}
+        with:
+          model: opencode/big-pickle
+          prompt: /review-pr
