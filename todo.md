@@ -20,10 +20,13 @@
 
 ## In `@apps/api`
 
-- [ ] Setting up nestjs project.
-- [ ] Give a read: [https://docs.nestjs.com/cli/monorepo](https://docs.nestjs.com/cli/monorepo)
+- [x] Setting up nestjs project.
+- [x] Give a read: [https://docs.nestjs.com/cli/monorepo](https://docs.nestjs.com/cli/monorepo)
 - [ ] Figure out what happens with tsconfig.json because theirs a tsconfig.base.json in root.
 - [ ] endpoint design and most of it part is yet to be done. (Refer: docs/overview.canvas)
+- [ ] In habits, add checks for same info getting added to the db multiple times.
+- [ ] Add column in habit table in db, archive that takes boolean right now it has archived_at column.
+- [ ] Add Dockerfile and docker-compose file and prepare backend for cloud deployment. (api.mosaic.iamadi.xyz).
 
 ## In `@apps/mobile`
 
