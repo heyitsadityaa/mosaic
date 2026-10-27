@@ -4,18 +4,13 @@
 		"slug": "mobile",
 		"version": "1.0.0",
 		"orientation": "portrait",
-		"icon": "./assets/images/icon.png",
 		"scheme": "com.mosaic.mobile",
 		"userInterfaceStyle": "automatic",
-		"ios": {
-			"icon": "./assets/expo.icon"
-		},
 		"android": {
 			"adaptiveIcon": {
-				"backgroundColor": "#E6F4FE",
-				"foregroundImage": "./assets/images/android-icon-foreground.png",
-				"backgroundImage": "./assets/images/android-icon-background.png",
-				"monochromeImage": "./assets/images/android-icon-monochrome.png"
+				"backgroundColor": "#000000",
+				"foregroundImage": "./assets/images/icon-white.png",
+				"monochromeImage": "./assets/images/icon-white.png"
 			},
 			"predictiveBackGestureEnabled": false,
 			"package": "com.mosaic.mobile"
@@ -29,9 +24,13 @@
 			[
 				"expo-splash-screen",
 				{
-					"backgroundColor": "#208AEF",
-					"image": "./assets/images/splash-icon.png",
-					"imageWidth": 76
+					"backgroundColor": "#FFFFFF",
+					"image": "./assets/images/splash-icon-black.png",
+					"dark": {
+						"image": "./assets/images/splash-icon-white.png",
+						"backgroundColor": "#000000"
+					},
+					"imageWidth": 64
 				}
 			]
 		],
@@ -44,6 +43,9 @@
 			"eas": {
 				"projectId": "7395a613-8a47-4145-a36b-7e44ca1f2287"
 			}
+		},
+		"ios": {
+			"bundleIdentifier": "com.mosaic.mobile"
 		}
 	}
 }
