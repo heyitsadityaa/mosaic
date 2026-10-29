@@ -1,9 +1,127 @@
-:root {
-  --font-display:
-    Spline Sans, Inter, ui-sans-serif, system-ui, sans-serif, Apple Color Emoji, Segoe UI Emoji,
-    Segoe UI Symbol, Noto Color Emoji;
-  --font-mono:
-    ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, Liberation Mono, Courier New, monospace;
-  --font-rounded: 'SF Pro Rounded', 'Hiragino Maru Gothic ProN', Meiryo, 'MS PGothic', sans-serif;
-  --font-serif: Georgia, 'Times New Roman', serif;
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    --background: 255 255 255;
+    --foreground: 0 0 0;
+    --card: 244 244 244;
+    --card-foreground: 0 0 0;
+    --popover: 255 255 255;
+    --popover-foreground: 0 0 0;
+    --primary: 0 0 0;
+    --primary-foreground: 255 255 255;
+    --secondary: 244 244 244;
+    --secondary-foreground: 0 0 0;
+    --muted: 244 244 244;
+    --muted-foreground: 107 107 107;
+    --accent: 230 230 230;
+    --accent-foreground: 0 0 0;
+    --destructive: 0 0 0;
+    --destructive-foreground: 255 255 255;
+    --border: 230 230 230;
+    --input: 0 0 0;
+    --ring: 0 0 0;
+    --chart-1: 134 239 172;
+    --chart-2: 34 197 94;
+    --chart-3: 21 128 61;
+    --chart-4: 237 237 237;
+    --chart-5: 0 0 0;
+    --scrim: 0 0 0;
+    --sidebar: 255 255 255;
+    --sidebar-foreground: 0 0 0;
+    --sidebar-primary: 0 0 0;
+    --sidebar-primary-foreground: 255 255 255;
+    --sidebar-accent: 244 244 244;
+    --sidebar-accent-foreground: 0 0 0;
+    --sidebar-border: 230 230 230;
+    --sidebar-ring: 0 0 0;
+
+    --font-sans: Inter;
+    --font-serif: Inter;
+    --font-mono: "JetBrains Mono";
+
+    --radius: 0px;
+    --radius-xs: 2px;
+    --radius-cell: 3px;
+    --radius-sm: 4px;
+    --radius-clock: 6px;
+    --radius-card: 12px;
+    --radius-sheet: 20px;
+    --radius-full: 999px;
+
+    --shadow-x: 0px;
+    --shadow-y: 0px;
+    --shadow-blur: 0px;
+    --shadow-spread: 0px;
+    --shadow-opacity: 0;
+    --shadow-color: transparent;
+    --shadow-2xs: 0px 0px 0px 0px hsl(0 0% 0% / 0);
+    --shadow-xs: 0px 0px 0px 0px hsl(0 0% 0% / 0);
+    --shadow-sm:
+      0px 0px 0px 0px hsl(0 0% 0% / 0), 0px 1px 2px -1px hsl(0 0% 0% / 0);
+    --shadow:
+      0px 0px 0px 0px hsl(0 0% 0% / 0), 0px 1px 2px -1px hsl(0 0% 0% / 0);
+    --shadow-md:
+      0px 0px 0px 0px hsl(0 0% 0% / 0), 0px 2px 4px -1px hsl(0 0% 0% / 0);
+    --shadow-lg:
+      0px 0px 0px 0px hsl(0 0% 0% / 0), 0px 4px 6px -1px hsl(0 0% 0% / 0);
+    --shadow-xl:
+      0px 0px 0px 0px hsl(0 0% 0% / 0), 0px 8px 10px -1px hsl(0 0% 0% / 0);
+    --shadow-2xl: 0px 0px 0px 0px hsl(0 0% 0% / 0);
+
+    --tracking-normal: 0em;
+    --spacing: 0.25rem;
+  }
+}
+
+/*
+ * NativeWind needs dark variables on the root, not on a plain `.dark` class.
+ * Keeping this outside `@layer base` also stops Tailwind 3 from tree-shaking
+ * the block when `dark` does not appear in scanned content.
+ */
+.dark:root {
+  --background: 0 0 0;
+  --foreground: 255 255 255;
+  --card: 17 17 17;
+  --card-foreground: 255 255 255;
+  --popover: 17 17 17;
+  --popover-foreground: 255 255 255;
+  --primary: 255 255 255;
+  --primary-foreground: 0 0 0;
+  --secondary: 17 17 17;
+  --secondary-foreground: 255 255 255;
+  --muted: 17 17 17;
+  --muted-foreground: 155 155 155;
+  --accent: 31 31 31;
+  --accent-foreground: 255 255 255;
+  --destructive: 255 255 255;
+  --destructive-foreground: 0 0 0;
+  --border: 31 31 31;
+  --input: 255 255 255;
+  --ring: 255 255 255;
+  --chart-1: 134 239 172;
+  --chart-2: 34 197 94;
+  --chart-3: 21 128 61;
+  --chart-4: 26 26 26;
+  --chart-5: 255 255 255;
+  --scrim: 0 0 0;
+  --sidebar: 0 0 0;
+  --sidebar-foreground: 255 255 255;
+  --sidebar-primary: 255 255 255;
+  --sidebar-primary-foreground: 0 0 0;
+  --sidebar-accent: 17 17 17;
+  --sidebar-accent-foreground: 255 255 255;
+  --sidebar-border: 31 31 31;
+  --sidebar-ring: 255 255 255;
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+  body {
+    @apply bg-background text-foreground;
+  }
 }

@@ -27,4 +27,11 @@
 
 ## In `@apps/mobile`
 
+- [ ] Fix the `react-hooks/set-state-in-effect` lint error in `src/hooks/use-color-scheme.web.ts` by using `useSyncExternalStore` (or add a justified suppression).
+- [ ] Bundle Inter and JetBrains Mono, then apply `font-sans`/`font-mono` so the UI matches the DESIGN.md typography.
+- [ ] Configure Biome to allow the `@tailwind` at-rules in `src/global.css` instead of removing the directives.
+- [ ] Review the unrelated config/dependency changes: `biome.json` `organizeImports: "off"`, unused `tailwindcss-animate`, `pnpm-workspace.yaml` `onlyBuiltDependencies`, and the redundant direct `react-native-css-interop` dependency.
+- [ ] Sign-in polish: use theme tokens for the `ActivityIndicator`, friendly error copy instead of `Failed to fetch`, a `RETRYING…` state for the retry action, and remove the `sm:h-14` Button size workaround.
+- [ ] Clean up `apps/mobile/src/app/(authenticated)` and `apps/mobile/src/components`: migrate the remaining screens from `ThemedText`/`ThemedView` and legacy `Colors` to the NativeWind theme tokens; remove stale or unused routes/components and delete starter/demo components that are no longer required (e.g., `animated-icon*`, `hint-row`, `web-badge`, `external-link`, `ui/collapsible`), while keeping shared UI that is still used. Also remove `components.json` if the shadcn CLI is not part of the workflow.
+
 ## In `@package/mobile-ui`
