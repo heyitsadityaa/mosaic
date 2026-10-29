@@ -6,6 +6,7 @@
 			"!**/.agents",
 			"!**/.turbo",
 			"!**/dist",
+			"!**/global.css",
 			"!apps/mobile/android"
 		]
 	},
