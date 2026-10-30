@@ -1,7 +1,13 @@
 .agents
+.git
 node_modules
 dist
+.turbo
+
 .env
 .env.*
+deploy/*.env
+
 !.env.example
 !.env.*.example
+!deploy/*.env.example
