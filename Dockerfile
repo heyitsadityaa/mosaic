@@ -20,6 +20,8 @@ RUN pnpm --filter @mosaic/api... run build
 
 RUN pnpm deploy --filter @mosaic/api --prod --legacy /app/pruned
 
+RUN cp -R /app/apps/api/dist /app/pruned/dist
+
 
 FROM node:24-bookworm-slim AS runtime
 
@@ -28,7 +30,7 @@ WORKDIR /app
 ENV NODE_ENV=production
 ENV PORT=3000
 
-COPY --from=build /app/pruned ./
+COPY --from=build --chown=node:node /app/pruned ./
 
 EXPOSE 3000
 
