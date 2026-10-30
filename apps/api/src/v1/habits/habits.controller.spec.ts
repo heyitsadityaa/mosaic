@@ -17,4 +17,8 @@ describe("HabitsController", () => {
 	it("should be defined", () => {
 		expect(controller).toBeDefined();
 	});
+
+	it("exposes the heatmap route", () => {
+		expect(controller.getHeatmap).toBeDefined();
+	});
 });

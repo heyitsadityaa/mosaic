@@ -8,13 +8,14 @@ import {
 	ParseUUIDPipe,
 	Patch,
 	Post,
+	Query,
 } from "@nestjs/common";
 import { Session } from "@thallesp/nestjs-better-auth";
+import type { SessionUser } from "../../common/session.js";
 import { CreateHabitDto } from "./dto/create-habit.dto.js";
+import { HeatmapQueryDto } from "./dto/heatmap-query.dto.js";
 import { UpdateHabitDto } from "./dto/update-habit.dto.js";
 import { HabitsService } from "./habits.service.js";
-
-type SessionUser = { user: { id: string } };
 
 @Controller({ path: "habits", version: "1" })
 export class HabitsController {
@@ -33,30 +34,44 @@ export class HabitsController {
 		return this.habitsService.findAll(session.user.id);
 	}
 
-	@Get(":id")
-	findOne(
-		@Param("id", ParseUUIDPipe) id: string,
+	@Get(":habitId/heatmap")
+	getHeatmap(
 		@Session() session: SessionUser,
+		@Param("habitId", ParseUUIDPipe) habitId: string,
+		@Query() query: HeatmapQueryDto,
 	) {
-		return this.habitsService.findOne(session.user.id, id);
+		return this.habitsService.getHeatmap(
+			session.user.id,
+			session.user.timezone,
+			habitId,
+			query,
+		);
 	}
 
-	@Patch(":id")
+	@Get(":habitId")
+	findOne(
+		@Param("habitId", ParseUUIDPipe) habitId: string,
+		@Session() session: SessionUser,
+	) {
+		return this.habitsService.findOne(session.user.id, habitId);
+	}
+
+	@Patch(":habitId")
 	@HttpCode(204)
 	async update(
-		@Param("id", ParseUUIDPipe) id: string,
+		@Param("habitId", ParseUUIDPipe) habitId: string,
 		@Body() updateHabitDto: UpdateHabitDto,
 		@Session() session: SessionUser,
 	) {
-		await this.habitsService.update(session.user.id, id, updateHabitDto);
+		await this.habitsService.update(session.user.id, habitId, updateHabitDto);
 	}
 
-	@Delete(":id")
+	@Delete(":habitId")
 	@HttpCode(204)
 	async remove(
-		@Param("id", ParseUUIDPipe) id: string,
+		@Param("habitId", ParseUUIDPipe) habitId: string,
 		@Session() session: SessionUser,
 	) {
-		await this.habitsService.remove(session.user.id, id);
+		await this.habitsService.remove(session.user.id, habitId);
 	}
 }

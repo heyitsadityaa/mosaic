@@ -73,6 +73,7 @@ Every endpoint needs a stable, uniformly-derived URL and a promise about breakin
 
 - Resources are **plural lowercase nouns, no underscores** in URLs.
 - A URL segment **may differ from the table name**, and that mapping is deliberate — `habit_entries` (table) ↔ `entries` (resource).
+- **Path parameters are named for their resource** — `:habitId` always refers to `habit.id`; `:id` always refers to `habit_entries.id`.
 - **Spellings are frozen** once written; drift is a convention violation, not a typo.
 
 Path versioning was chosen for its explicitness — URLs are debuggable, cacheable, and testable without headers — and header versioning was rejected as introspection-heavy for a single-client API. The one exception is auth (§3), which is versioned by its dependency, not by us.
@@ -215,15 +216,15 @@ The dashboard shows heatmaps; the analytics page shows stats. Where do those num
 
 ### Considered Options
 
-1. **Server-aggregated reads** — `GET /habits/:id/heatmap` and `GET /habits/:id/stats`; Postgres does the math, the client renders.
+1. **Server-aggregated reads** — `GET /habits/:habitId/heatmap` and `GET /habits/:habitId/stats`; Postgres does the math, the client renders.
 2. **Raw-entries + client aggregation** — ship history, let the client `GROUP BY`.
 
 ### Decision Outcome
 
 **Chosen: Option 1 — server-computed reads, returned as render-ready shapes:**
 
-- `GET /habits/:id/heatmap?from&to` — array of `{ date, value }` day-cells (server `GROUP BY entryDate`; the endpoint Database Decision §4 already named).
-- `GET /habits/:id/stats?period=year|month|week` — streak, total, average-per-day for the period (SQL window/aggregate queries).
+- `GET /habits/:habitId/heatmap?from&to` — array of `{ date, value }` day-cells (server `GROUP BY entryDate`; the endpoint Database Decision §4 already named).
+- `GET /habits/:habitId/stats?period=year|month|week` — streak, total, average-per-day for the period (SQL window/aggregate queries).
 
 **The latency reframe — the wait is the network, not the CPU.** Whatever the design, a habit's history is not on the phone; a screen that needs it _waits for a round trip_. Client-side aggregation cannot remove that wait — it can only change what crosses the wire:
 
@@ -254,7 +255,7 @@ The schema has `archivedAt` on `habit`, but the delete in the route table was dr
 
 **Chosen: soft archive for habits, hard delete for entries.**
 
-- `DELETE /habits/:id` — sets `archivedAt`; the habit leaves the active list and `GET /habits` excludes archived rows by default, but entries and their history survive for analytics.
+- `DELETE /habits/:habitId` — sets `archivedAt`; the habit leaves the active list and `GET /habits` excludes archived rows by default, but entries and their history survive for analytics.
 - `DELETE /entries/:habitId/:id` — **hard removal of a today-only row** (per §5). No archiving of events; the day-lock bounds it anyway.
 - Same HTTP verb, **204** for both — the archive/hard distinction is invisible at the wire level.
 
@@ -300,22 +301,22 @@ Deployments and uptime monitors need a probe that answers "is the service up" wi
 
 Canonical, matching the decisions above. Phase 1 exercises `timer` only; `binary`/`number`/`options` come online as columns + validation guards (DB §6).
 
-| Method   | Path                                 | Purpose                                          | Client sends                            | Returns                        |
-| -------- | ------------------------------------ | ------------------------------------------------ | --------------------------------------- | ------------------------------ |
-| `POST`   | `/api/v1/habits`                     | create habit (immutable `valueType`)             | `{ name, valueType, options?, color? }` | 201 + habit                    |
-| `GET`    | `/api/v1/habits`                     | list my habits (excludes archived)               | —                                       | 200 + habits                   |
-| `GET`    | `/api/v1/habits/:id`                 | habit detail                                     | —                                       | 200 + habit                    |
-| `PATCH`  | `/api/v1/habits/:id`                 | rename / recolor                                 | `{ name?, color? }`                     | 204                            |
-| `DELETE` | `/api/v1/habits/:id`                 | archive (soft)                                   | —                                       | 204                            |
-| `GET`    | `/api/v1/habits/:id/heatmap?from&to` | day-cells                                        | —                                       | 200 + cells                    |
-| `GET`    | `/api/v1/habits/:id/stats?period=`   | streak / total / avg                             | —                                       | 200 + stats                    |
-| `POST`   | `/api/v1/entries/:habitId`           | append a session                                 | `{ durationSecs }`                      | 201 + row                      |
-| `GET`    | `/api/v1/entries/:habitId?from&to`   | raw rows (today's edit view, history)            | —                                       | 200 + rows                     |
-| `PATCH`  | `/api/v1/entries/:habitId/:id`       | fix today's row value                            | `{ durationSecs }`                      | 204                            |
-| `DELETE` | `/api/v1/entries/:habitId/:id`       | remove today's row                               | —                                       | 204                            |
-| `GET`    | `/api/v1/health`                     | liveness probe — versioned, unauthenticated (§9) | —                                       | 200 + `{ status: "ok" }` / 503 |
+| Method   | Path                                      | Purpose                                          | Client sends                            | Returns                        |
+| -------- | ----------------------------------------- | ------------------------------------------------ | --------------------------------------- | ------------------------------ |
+| `POST`   | `/api/v1/habits`                          | create habit (immutable `valueType`)             | `{ name, valueType, options?, color? }` | 201 + habit                    |
+| `GET`    | `/api/v1/habits`                          | list my habits (excludes archived)               | —                                       | 200 + habits                   |
+| `GET`    | `/api/v1/habits/:habitId`                 | habit detail                                     | —                                       | 200 + habit                    |
+| `PATCH`  | `/api/v1/habits/:habitId`                 | rename / recolor                                 | `{ name?, color? }`                     | 204                            |
+| `DELETE` | `/api/v1/habits/:habitId`                 | archive (soft)                                   | —                                       | 204                            |
+| `GET`    | `/api/v1/habits/:habitId/heatmap?from&to` | day-cells                                        | —                                       | 200 + cells                    |
+| `GET`    | `/api/v1/habits/:habitId/stats?period=`   | streak / total / avg                             | —                                       | 200 + stats                    |
+| `POST`   | `/api/v1/entries/:habitId`                | append a session                                 | `{ durationSecs }`                      | 201 + row                      |
+| `GET`    | `/api/v1/entries/:habitId?from&to`        | raw rows (today's edit view, history)            | —                                       | 200 + rows                     |
+| `PATCH`  | `/api/v1/entries/:habitId/:id`            | fix today's row value                            | `{ durationSecs }`                      | 204                            |
+| `DELETE` | `/api/v1/entries/:habitId/:id`            | remove today's row                               | —                                       | 204                            |
+| `GET`    | `/api/v1/health`                          | liveness probe — versioned, unauthenticated (§9) | —                                       | 200 + `{ status: "ok" }` / 503 |
 
-Invariant to type-check every line: **no `userId` anywhere, no dates on writes, authorization by scoped queries, create is always POST / edit-and-delete address an existing `:id`.** The `/api/v1/health` row is the documented liveness exception (§9): no session and no owner.
+Invariant to type-check every line: **no `userId` anywhere, no dates on writes, authorization by scoped queries, create is always POST / edit-and-delete address an existing entry `:id`.** The `/api/v1/health` row is the documented liveness exception (§9): no session and no owner.
 
 ---
 

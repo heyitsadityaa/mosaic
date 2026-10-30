@@ -1,9 +1,9 @@
-import { fileURLToPath } from "node:url";
 import { expo } from "@better-auth/expo";
 import { account, db, session, user, verification } from "@mosaic/db";
 import { betterAuth } from "better-auth";
 import { drizzleAdapter } from "better-auth/adapters/drizzle";
 import { config } from "dotenv";
+import { fileURLToPath } from "node:url";
 
 config({ path: fileURLToPath(new URL("../.env.local", import.meta.url)) });
 
@@ -28,6 +28,14 @@ if (!clientSecret) {
 
 export const auth = betterAuth({
 	secret,
+	session: {
+		cookieCache: {
+			enabled: true,
+			maxAge: 5 * 60, // Cache duration in seconds (5 minutes)
+			strategy: "compact", // Options: "compact", "jwt", or "jwe"
+			refreshCache: true,
+		},
+	},
 	user: {
 		additionalFields: {
 			// Placeholder until the client reports the device's IANA timezone.
@@ -46,7 +54,7 @@ export const auth = betterAuth({
 		provider: "pg",
 		// Required: the adapter validates the store against this schema, and
 		// `drizzle-orm/neon-http` does not expose one on the db instance.
-		schema: { account, session, user, verification }
+		schema: { account, session, user, verification },
 	}),
 	trustedOrigins: [
 		// Must match the "scheme" in apps/mobile/app.json. Better Auth only

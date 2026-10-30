@@ -40,6 +40,10 @@
 - [ ] In habits, add checks for same info getting added to the db multiple times.
 - [ ] Add column in habit table in db, archive that takes boolean right now it has archived_at column.
 - [ ] Add Dockerfile and docker-compose file and prepare backend for cloud deployment. (api.mosaic.iamadi.xyz).
+- [ ] **Fix 4–5s API TTFB**
+  - **Issue:** Most authenticated endpoint latency is spent waiting on the database; Nest overhead is negligible (`/api/v1/health` is ~1ms).
+  - **Cause:** Neon is in `us-east-2`. A warm query is ~300ms, and the first `neon-http` fetch after roughly 10s idle is ~2.2s. Each protected request also performs a Better Auth session lookup plus one or two sequential service queries.
+  - **Proposed solution:** deploy the API and database in the same region; replace `neon-http` with a persistent pooled Postgres connection; target a standalone PostgreSQL instance on an Azure VM; use Better Auth session cookie caching (`packages/auth/src/auth.ts`, temporary change for now); remove redundant habit-ownership queries from the entries and heatmap paths.
 
 ## In `@apps/mobile`
 
