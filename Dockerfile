@@ -18,7 +18,7 @@ COPY packages/db packages/db
 
 RUN pnpm --filter @mosaic/api... run build
 
-RUN pnpm deploy --filter @mosaic/api --prod /app/pruned
+RUN pnpm deploy --filter @mosaic/api --prod --legacy /app/pruned
 
 
 FROM node:24-bookworm-slim AS runtime
