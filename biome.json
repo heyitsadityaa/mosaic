@@ -6,13 +6,14 @@
 			"!**/.agents",
 			"!**/.turbo",
 			"!**/dist",
+			"!**/global.css",
 			"!apps/mobile/android"
 		]
 	},
 	"assist": {
 		"actions": {
 			"source": {
-				"organizeImports": "on"
+				"organizeImports": "off"
 			}
 		}
 	},
